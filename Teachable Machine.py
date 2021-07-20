@@ -1,4 +1,5 @@
-from PIL import ImageTk, Image
+from PIL import Image as Img
+from PIL import ImageTk
 from tkinter import *
 import numpy as np
 import shutil
@@ -107,7 +108,7 @@ def test_model():
         
     #Shows the camera output
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)    
-    img = Image.fromarray(frame)
+    img = Img.fromarray(frame)
     imgtk = ImageTk.PhotoImage(image=img)
     label.imgtk = imgtk
     label.configure(image=imgtk)
@@ -122,7 +123,7 @@ def show_frame():
         show_frame.frame = cv2.resize(show_frame.frame,(int(show_frame.frame.shape[1]/1.25),int(show_frame.frame.shape[0]/1.25)))
         show_frame.frame = cv2.cvtColor(show_frame.frame, cv2.COLOR_BGR2RGBA)      
         
-        img = Image.fromarray(show_frame.frame)
+        img = Img.fromarray(show_frame.frame)
         imgtk = ImageTk.PhotoImage(image=img)
         label.imgtk = imgtk
         label.configure(image=imgtk)
@@ -130,56 +131,31 @@ def show_frame():
     
 show_frame()
     
+class HoverButton(Button):
+    def __init__(self, master, **kw):
+        Button.__init__(self,master=master,**kw)
+        self.configure(bg='black',fg='white', font=('Helvetica',20,'bold'),pady=15, borderwidth = 0)
+        self.defaultBackground = self["background"]
+        self.bind("<Enter>", self.on_enter)
+        self.bind("<Leave>", self.on_leave)
+        
+    def on_enter(self,e):
+        self['background'] = 'darkslategrey'
+
+    def on_leave(self,e):
+        self['background'] = 'black'
+        
 #Creating buttons
-button1 = Button(label2,text=" OBJECT 1 ",padx=55,pady=15, borderwidth = 0, command = lambda: save(show_frame.frame,'Object 1'))
+button1 = HoverButton(label2,text=" OBJECT 1 ",padx=55, command = lambda: save(show_frame.frame,'Object 1'))
 button1.grid(row = 0, column = 0)
-button1.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
 
-def enter1(e):
-    button1['background'] = 'darkslategrey'
-
-def leave1(e):
-    button1['background'] = 'black'
-
-button1.bind("<Enter>", enter1)
-button1.bind("<Leave>", leave1)
-
-button2 = Button(label2,text=" OBJECT 2 ",padx=55,pady=15, borderwidth = 0, command = lambda: save(show_frame.frame,'Object 2'))
+button2 = HoverButton(label2,text=" OBJECT 2 ",padx=55, command = lambda: save(show_frame.frame,'Object 2'))
 button2.grid(row = 0, column = 1)
-button2.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
-def enter2(e):
-    button2['background'] = 'darkslategrey'
 
-def leave2(e):
-    button2['background'] = 'black'
-
-button2.bind("<Enter>", enter2)
-button2.bind("<Leave>", leave2)
-
-train_button = Button(label2,text=" Train ",padx=90,pady=15, borderwidth = 0, command = lambda: train_model())
+train_button = HoverButton(label2,text=" Train ",padx=90, command = lambda: train_model())
 train_button.grid(row = 2, column = 0)
-train_button.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
 
-def enter1(e):
-    train_button['background'] = 'darkslategrey'
-
-def leave1(e):
-    train_button['background'] = 'black'
-
-train_button.bind("<Enter>", enter1)
-train_button.bind("<Leave>", leave1)
-
-test_button = Button(label2,text=" Test ",padx=90,pady=15, borderwidth = 0, command = lambda: test_model())
+test_button = HoverButton(label2,text=" Test ",padx=90, command = lambda: test_model())
 test_button.grid(row = 2, column = 1)
-test_button.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
-
-def enter1(e):
-    test_button['background'] = 'darkslategrey'
-
-def leave1(e):
-    test_button['background'] = 'black'
-
-test_button.bind("<Enter>", enter1)
-test_button.bind("<Leave>", leave1)
 
 root.mainloop()
