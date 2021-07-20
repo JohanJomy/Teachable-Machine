@@ -1,0 +1,170 @@
+import cv2,os
+from tkinter import *   
+import numpy as np
+import shutil
+from PIL import ImageTk, Image
+
+root = Tk()      
+root.title('Teachable Machine')   
+root.configure(bg='black')    
+root.resizable(0,0)
+camera = cv2.VideoCapture(0,cv2.CAP_DSHOW)  
+
+root.geometry('550x550')
+test = False
+
+label = Label(root)
+label.configure(bg='black')
+label.grid(row = 0, column = 0)
+
+label2 = Label(root)
+label2.configure(bg='black')
+label2.grid(row = 1, column = 0)
+
+trainX = []
+trainY = []
+
+path = os.getcwd()
+print(path)
+if not os.path.exists('Project/Training Data'):
+    os.makedirs('Project/Training Data')
+    os.makedirs('Project/Training Data/Object_1')
+    os.makedirs('Project/Training Data/Object_2')
+
+else:
+    shutil.rmtree('Project/Training Data')
+    os.makedirs('Project/Training Data')
+    os.makedirs('Project/Training Data/Object 1')
+    os.makedirs('Project/Training Data/Object 2')
+
+num, num2 = 1, 1
+running = True
+    
+def save(img, folder):
+    global num, num2
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    
+    if folder == 'Object 1':
+        cv2.imwrite('Project/Training Data/Object 1/' + str(num) + '.jpg', img)
+        num+=1
+    
+    elif folder == 'Object 2':
+        cv2.imwrite('Project/Training Data/Object 2/'+ str(num2) + '.jpg', img)
+        num2+=1
+
+def averagecolor(image):
+    return np.mean(image, axis=(0, 1))
+
+def train_model():
+    path = 'Project/Training Data/'
+    for label in ('Object 1','Object 2'):
+        print ("Loading training images for the label: "+label)
+        
+        for filename in os.listdir(path+label+"/"): 
+            img = cv2.imread(path+label+"/"+filename)
+            img_features = averagecolor(img)
+            trainX.append(img_features)
+            trainY.append(label)
+            
+def test_model():
+    global test
+    test = True
+    
+    button1["state"] = "disabled"
+    button2["state"] = "disabled"
+
+    _, frame = camera.read()
+    frame = cv2.flip(frame, 1)
+    frame = cv2.resize(frame,(int(frame.shape[1]/1.25),int(frame.shape[0]/1.25)))
+    
+    features = averagecolor(frame)
+    calculated_distances = []
+    for i in (trainX):
+        calculated_distances.append(np.linalg.norm(features-i))
+        
+    prediction =  trainY[np.argmin(calculated_distances)]
+    if prediction == 'Object 1':
+        
+        button1.configure(bg='green',fg='white')
+        button2.configure(bg='black',fg='white')
+    elif prediction == 'Object 2':
+        
+        button2.configure(bg='green',fg='white')
+        button1.configure(bg='black',fg='white')
+    
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)    
+    img = Image.fromarray(frame)
+    imgtk = ImageTk.PhotoImage(image=img)
+    label.imgtk = imgtk
+    label.configure(image=imgtk)
+    label.after(10, test_model)
+
+
+def show_frame():
+    if test == False:
+
+        _, show_frame.frame = camera.read()
+        show_frame.frame = cv2.flip(show_frame.frame, 1)
+        show_frame.frame = cv2.resize(show_frame.frame,(int(show_frame.frame.shape[1]/1.25),int(show_frame.frame.shape[0]/1.25)))
+        show_frame.frame = cv2.cvtColor(show_frame.frame, cv2.COLOR_BGR2RGBA)      
+        
+        img = Image.fromarray(show_frame.frame)
+        imgtk = ImageTk.PhotoImage(image=img)
+        label.imgtk = imgtk
+        label.configure(image=imgtk)
+        label.after(10, show_frame)
+    
+show_frame()
+    
+button1 = Button(label2,text=" OBJECT 1 ",padx=55,pady=15, borderwidth = 0, command = lambda: save(show_frame.frame,'Object 1'))
+button1.grid(row = 0, column = 0)
+button1.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
+
+def enter1(e):
+    button1['background'] = 'darkslategrey'
+
+def leave1(e):
+    button1['background'] = 'black'
+
+button1.bind("<Enter>", enter1)
+button1.bind("<Leave>", leave1)
+
+button2 = Button(label2,text=" OBJECT 2 ",padx=55,pady=15, borderwidth = 0, command = lambda: save(show_frame.frame,'Object 2'))
+button2.grid(row = 0, column = 1)
+button2.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
+def enter2(e):
+    button2['background'] = 'darkslategrey'
+
+def leave2(e):
+    button2['background'] = 'black'
+
+button2.bind("<Enter>", enter2)
+button2.bind("<Leave>", leave2)
+
+train_button = Button(label2,text=" Train ",padx=90,pady=15, borderwidth = 0, command = lambda: train_model())
+train_button.grid(row = 2, column = 0)
+train_button.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
+
+def enter1(e):
+    train_button['background'] = 'darkslategrey'
+
+def leave1(e):
+    train_button['background'] = 'black'
+
+train_button.bind("<Enter>", enter1)
+train_button.bind("<Leave>", leave1)
+
+test_button = Button(label2,text=" Test ",padx=90,pady=15, borderwidth = 0, command = lambda: test_model())
+test_button.grid(row = 2, column = 1)
+test_button.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
+
+def enter1(e):
+    test_button['background'] = 'darkslategrey'
+
+def leave1(e):
+    test_button['background'] = 'black'
+
+test_button.bind("<Enter>", enter1)
+test_button.bind("<Leave>", leave1)
+
+root.mainloop()
