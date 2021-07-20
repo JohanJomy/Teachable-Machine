@@ -1,9 +1,11 @@
-import cv2,os
-from tkinter import *   
+from PIL import ImageTk, Image
+from tkinter import *
 import numpy as np
 import shutil
-from PIL import ImageTk, Image
+import cv2
+import os
 
+# initializing variables
 root = Tk()      
 root.title('Teachable Machine')   
 root.configure(bg='black')    
@@ -24,6 +26,7 @@ label2.grid(row = 1, column = 0)
 trainX = []
 trainY = []
 
+#Creating a file to store the training data or deleting and recreating the file to remove the old training data stored
 path = os.getcwd()
 print(path)
 if not os.path.exists('Project/Training Data'):
@@ -39,22 +42,25 @@ else:
 
 num, num2 = 1, 1
 running = True
-    
-def save(img, folder):
+
+#Function to save the images to the folder according to the label 
+def save(img, label):
     global num, num2
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     
-    if folder == 'Object 1':
+    if label == 'Object 1':
         cv2.imwrite('Project/Training Data/Object 1/' + str(num) + '.jpg', img)
         num+=1
     
-    elif folder == 'Object 2':
+    elif label == 'Object 2':
         cv2.imwrite('Project/Training Data/Object 2/'+ str(num2) + '.jpg', img)
         num2+=1
 
+#Function to find the average color of the image
 def averagecolor(image):
     return np.mean(image, axis=(0, 1))
 
+#Function to train the model with the collected training data
 def train_model():
     path = 'Project/Training Data/'
     for label in ('Object 1','Object 2'):
@@ -65,11 +71,15 @@ def train_model():
             img_features = averagecolor(img)
             trainX.append(img_features)
             trainY.append(label)
-            
+
+#Function to test the model which was trained            
 def test_model():
     global test
+    
+    #Stops the show_frame function
     test = True
     
+    # making the buttons for geting the data of different objects disabled 
     button1["state"] = "disabled"
     button2["state"] = "disabled"
 
@@ -77,12 +87,15 @@ def test_model():
     frame = cv2.flip(frame, 1)
     frame = cv2.resize(frame,(int(frame.shape[1]/1.25),int(frame.shape[0]/1.25)))
     
+    #Finding the object shown on the camera and give output as colored buttons(green) accoring to the distance calculated 
     features = averagecolor(frame)
     calculated_distances = []
     for i in (trainX):
         calculated_distances.append(np.linalg.norm(features-i))
         
     prediction =  trainY[np.argmin(calculated_distances)]
+    
+    #Making the buttons green if the object was recognized
     if prediction == 'Object 1':
         
         button1.configure(bg='green',fg='white')
@@ -91,7 +104,8 @@ def test_model():
         
         button2.configure(bg='green',fg='white')
         button1.configure(bg='black',fg='white')
-    
+        
+    #Shows the camera output
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)    
     img = Image.fromarray(frame)
     imgtk = ImageTk.PhotoImage(image=img)
@@ -99,7 +113,7 @@ def test_model():
     label.configure(image=imgtk)
     label.after(10, test_model)
 
-
+#Function to get the camera reading and display it on the screen
 def show_frame():
     if test == False:
 
@@ -116,6 +130,7 @@ def show_frame():
     
 show_frame()
     
+#Creating buttons
 button1 = Button(label2,text=" OBJECT 1 ",padx=55,pady=15, borderwidth = 0, command = lambda: save(show_frame.frame,'Object 1'))
 button1.grid(row = 0, column = 0)
 button1.configure(bg='black',fg='white', font=('Helvetica',20,'bold'))
