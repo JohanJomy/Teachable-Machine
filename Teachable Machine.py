@@ -72,7 +72,7 @@ def train_model():
             img_features = averagecolor(img)
             trainX.append(img_features)
             trainY.append(label)
-
+    print('COMPLETE!')
 #Function to test the model which was trained            
 def test_model():
     global test
